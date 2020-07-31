@@ -6,6 +6,7 @@ Currently it supports only level 1 LASCO C2, C3 data.
 
 '''
 import argparse
+import bs4
 import calendar
 import datetime
 import json
@@ -13,15 +14,30 @@ import logging
 import os
 import requests
 
+from bs4 import BeautifulSoup
+
 LOG = logging.getLogger('soho-data-client')
 logging.basicConfig(level=logging.INFO)
 
-def pull_soho_data (location:str, month:int, year:int, instrument:str, overwrite:bool=False)->str:
+def _parse_table_of_files(table:bs4.element.Tag)->list:
+    files = []
+
+    # find all cells with link
+    cells = table.find_all('td')
+    for td in cells:
+        for link in td.find_all('a'):
+            file_name = link.attrs['href']
+            if 'fts' in file_name or 'fits' in file_name:
+                files.append(file_name)
+    return files
+
+def pull_soho_data (location:str, month:int, year:int, instrument:str, overwrite:bool=False)->list:
     '''
     Download data from SOHO.
     '''
 
-    report = ""
+    successes = []
+    fails = []
 
     BASE_URL = 'https://lasco-www.nrl.navy.mil/lz/level_1'
     # formula for url to pull a file:
@@ -43,23 +59,40 @@ def pull_soho_data (location:str, month:int, year:int, instrument:str, overwrite
     for day in range(1,lastday+1):
 
         # get date string
-        #day = _reformat_val(day)
-        #date = f"%2d%2d%2d" % {year}{month}{day}"
         date = "{:02d}{:02d}{:02d}".format(year,month,day)
 
-        # construct url for this date
-        url = f"{BASE_URL}/{date}/{instrument}/"  
-        print (url)
+        # construct url for this date and pull the page
+        page_url = f"{BASE_URL}/{date}/{instrument}/"  
 
-    # 3. Download data
-    #  Loop over all months, days for data in that year
-    #  Get list of files for instrument on date
-    #  Check if file exists before pulling unless overwrite set
-    #  Pull file(s)
+        LOG.debug(f"Pulling data from {page_url}")
+        page = requests.get(page_url)
+
+        # marshall page into bs4 soup obj for parsing
+        soup = BeautifulSoup(page.text, 'html.parser')
+
+        # Get a list of files for instrument on date
+        tables = soup.find_all('table')
+        for fits_file in _parse_table_of_files(tables[0]):
+            path_to_write_to = os.path.join(location, fits_file)
+
+            # Check if file exists before pulling unless overwrite set
+            if not overwrite and os.path.exists(path_to_write_to):
+                LOG.debug(f"Skipped {path_to_write_to}, exists")
+            else:
+                # construct file url and pull via GET request
+                file_url = f"{page_url}{fits_file}" 
+                file_request = requests.get(file_url)
+
+                with open(path_to_write_to, 'wb') as f:
+                    f.write(file_request.content)
+
+                successes.append(f"Wrote {path_to_write_to}")
+
+        #  put file in report
+        break
 
     # 3. Return (success) report as string (throw exception for failures)
-
-    return report
+    return successes, fails
 
 
 if __name__ == '__main__':  
@@ -113,5 +146,8 @@ if __name__ == '__main__':
         exit()
 
     # pull the data
-    pull_soho_data (args.location, args.month, args.year, instrument, args.overwrite)
+    successes, fails = pull_soho_data (args.location, args.month, args.year, instrument, args.overwrite)
+
+    LOG.info(f"Wrote %s files" % len(successes))
+    LOG.info(f"Failed on %s files" % len(fails))
 
