@@ -1,8 +1,8 @@
 
 '''
-SOHO LASCO Data client.
+SOHO Data download client.
 
-Returns Level 1 data for selected dates.
+Currently it supports only level 1 LASCO C2, C3 data.
 
 '''
 import argparse
@@ -10,6 +10,7 @@ import calendar
 import datetime
 import json
 import logging
+import os
 import requests
 
 LOG = logging.getLogger('soho-data-client')
@@ -50,10 +51,6 @@ def pull_soho_data (location:str, month:int, year:int, instrument:str, overwrite
         url = f"{BASE_URL}/{date}/{instrument}/"  
         print (url)
 
-    # 2. Validation checks
-    #  check if location exists, if not bail
-    #  check if year is greater than 1995 and less than current year
-
     # 3. Download data
     #  Loop over all months, days for data in that year
     #  Get list of files for instrument on date
@@ -67,7 +64,7 @@ def pull_soho_data (location:str, month:int, year:int, instrument:str, overwrite
 
 if __name__ == '__main__':  
 
-    ap = argparse.ArgumentParser(description='Client to pull SOHO data by indicated time and instruments.')
+    ap = argparse.ArgumentParser(description='Client to pull SOHO data by indicated time and instrument.')
     ap.add_argument('location', help='Directory/path to download data to')
     ap.add_argument('-d', '--debug', default = False, action = 'store_true', help='Turn on debugging messages')
     ap.add_argument('-c2', default = False, action = 'store_true', help='Download C2 data')
@@ -82,22 +79,39 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
         LOG.setLevel(logging.DEBUG)
 
+    # validation checks
+
+    # did we select an instrument? 
     if args.c2:
         instrument="c2"
     elif args.c3:
         instrument="c3"
     else:
-        LOG.fatal("You need to pick either -c2 or -c3 option")
+        LOG.fatal(" You need to pick either -c2 or -c3 option")
         exit()
     
+    # is the date sane?
+    # before 1996 there is no data
     if args.year < 1996:
-        LOG.fatal("You cannot specify a year less than 1996")
+        LOG.fatal(" You cannot specify a year less than 1996")
         exit()
 
+    # after today there is no data (the future!)
     now = datetime.datetime.now()
     if args.year > now.year:
-        LOG.fatal(f"You cannot specify a year greater than %s" % now.year)
+        LOG.fatal(f" You cannot specify a year greater than %s" % now.year)
         exit()
 
+    #check the location exists
+    if not os.path.isdir(args.location):
+        LOG.fatal(f" %s directory does not exist (or is not a directory), please fix" % args.location)
+        exit()
+
+    #is location writable?
+    if not os.access(args.location, os.W_OK): 
+        LOG.fatal(f" %s directory is not writable" % args.location)
+        exit()
+
+    # pull the data
     pull_soho_data (args.location, args.month, args.year, instrument, args.overwrite)
 
