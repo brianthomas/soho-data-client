@@ -8,7 +8,8 @@ Simple client for downloading LASCO C2, C3 data from SOHO
 
 ## Usage
 ```bash
-usage: soho-data-client.py [-h] [-d] [-c2] [-c3] [-o] -m MONTH -y YEAR
+usage: soho-data-client.py [-h] [-d] [-c2] [-c3] [-t NUM_THREADS] [-o] -m
+                           MONTH -y YEAR
                            location
 
 Client to pull SOHO data by indicated time and instrument.
@@ -21,6 +22,8 @@ optional arguments:
   -d, --debug           Turn on debugging messages
   -c2                   Download C2 data
   -c3                   Download C3 data
+  -t NUM_THREADS, --num_threads NUM_THREADS
+                        Number of threads to use. Default:8
   -o, --overwrite       Overwrite existing data locally with downloaded files.
   -m MONTH, --month MONTH
                         Year to pull data for (MM format).
