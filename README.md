@@ -1,10 +1,13 @@
 # SOHO Data Client
 
 ## About
-Simple client for downloading LASCO C2, C3 data from SOHO
+Simple client for downloading LASCO C2, C3 data from SOHO. It will download data on a month-by-month basis to a local folder.  
 
 ## Installation
-
+```bash
+> python3 -m venv ./venv
+> source venv/bin/activate
+```
 
 ## Usage
 ```bash
