@@ -199,7 +199,7 @@ if __name__ == '__main__':
     statuses = pull_soho_data (args.location, args.month, args.year, instrument, args.num_threads, args.overwrite)
 
     LOG.info(f"Wrote %s files" % len(statuses['file_success']))
-    LOG.info(f"Did NOT write %s files" % len(statuses['file_skip']))
-    LOG.error(f" Errors for %s files (exception thrown))" % len(statuses['file_exception']))
-    LOG.fatal(f" Error for %s pages (exception thrown))" % len(statuses['page_exception']))
+    LOG.info(f"Skipped over %s files (no overwrite)" % len(statuses['file_skip']))
+    LOG.error(f" Errors for %s files (exception thrown)" % len(statuses['file_exception']))
+    LOG.fatal(f" Error for %s pages (exception thrown)" % len(statuses['page_exception']))
 
