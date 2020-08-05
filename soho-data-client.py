@@ -122,9 +122,6 @@ def pull_soho_data (location:str, month:int, year:int, instrument:str,\
 
         page_urls.append(page_url)
 
-    # TODO: REMOVE AFTER TESTING! Truncate to 10 pages
-    page_urls = page_urls[:10]
-
     # thread on page and download all files found on page within the thread.
     with concurrent.futures.ThreadPoolExecutor(max_workers = num_threads) as executor:
 
