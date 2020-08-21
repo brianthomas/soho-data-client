@@ -1,4 +1,11 @@
 
+There probably is an official document but I have no idea where that would be… but I can tell you the columns:
+filename; date-obs; time-obs; telescope; expTime; NumCols; NumRows; StartCol; StartRow; Filter; Polarizer; Observ.Seq; LEB Program; LEB Program
+ 
+You can generally ignore the last three columns entirely, and the Start Row/Col is effectively the same for the mission duration (and can be ignored, i.e. you don’t need to chop 20px off the data)
+ 
+Here is where I should note that the LZ data product has randomly drifting clock values. The TimeObs can be off by up to a few seconds, and exposure times off by maybe a second at most (in the most extreme case). This is corrected in the Level-1 data, and there are software routines that can correct for it too. It doesn’t matter for 98% of analyses, but I just figured I should mention it in case you need ultra-precision in your timing.
+
 32626427.fts    2020/07/01  00:06:05   C3    17.6   1024   1024     20      1  Clear   Clear   Normal       0.0000  4180
 32626428.fts    2020/07/01  00:18:06   C3    17.6   1024   1024     20      1  Clear   Clear   Normal       0.0000  4180
 32626429.fts    2020/07/01  00:30:05   C3    18.5   1024   1024     20      1  Clear   Clear   Normal       0.0000  4180
