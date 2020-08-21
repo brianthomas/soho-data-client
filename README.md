@@ -3,6 +3,12 @@
 ## About
 Simple client for downloading LASCO C2, C3 data from SOHO. It will download data on a month-by-month basis to a local folder.  
 
+## TODO:
+
+fold in the master image hdr file + a selection of time intervals to be able to cherry pick the files we wish to have.
+
+master image hdr file: https://lasco-www.nrl.navy.mil/lz/img_hdr.txt (its large!) 
+
 ## Installation
 ```bash
 > python3 -m venv ./venv
