@@ -41,9 +41,13 @@ def download_file(file_url:str, path_to_write_to:str)->list:
     except Exception as ex:
         return 1, f"Failed {path_to_write_to}, exception: {ex}"
 
-def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, timeout:int=DEF_TIMEOUT)->dict:
 
-    BASE_URL = 'https://lasco-www.nrl.navy.mil/lz/level_1'
+def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, timeout:int=DEF_TIMEOUT, is_level1:bool=True)->dict:
+
+    BASE_URL = 'https://lasco-www.nrl.navy.mil/lz'
+
+    if is_level1:
+        BASE_URL += '/level_1'
 
     statuses = {'success':[], 'skip':[], 'exception':[] }
 
@@ -116,7 +120,7 @@ def download_info(id_name:str, filelist:pd.DataFrame)->dict:
         date = "{:02d}{:02d}{:02d}".format(year,month,day)
 
         # construct url for this date and pull the page
-        url = f"{date}/{telescope}/{filename}.gz"
+        url = f"{date}/{telescope}/{filename}"
 
         urls[idn_val].append(url)
 
