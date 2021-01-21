@@ -26,12 +26,27 @@ DEF_NUM_THREADS = 8
 # default timeout for GET request in sec
 DEF_TIMEOUT = 5
 
+# Minimum expected FITS file size threshold, in bytes
+MIN_FILE_SIZE = 10000
+
 def download_file(file_url:str, path_to_write_to:str)->list:
-    ''' Download a single file from indicated url to location.
-    '''
-    LOG.debug(f"Pulling data from {file_url}")
+    """ 
+    Download a single file from indicated url to location.
+    """ 
+
     try:
+        LOG.debug(f"Pulling data from {file_url}")
         file_request = requests.get(file_url)
+
+        if len(file_request.content) < MIN_FILE_SIZE:
+            # Oops. We didnt get much data back. This can happen because
+            # we got redirected because the file is actually gzipped
+            # but the name provided to us is not (NRL inconsistency in catalog)
+            # lets re-try
+            file_url += '.gz'
+
+            LOG.debug(f"Original URL bogus, re-request from {file_url}")
+            file_request = requests.get(file_url)
 
         with open(path_to_write_to, 'wb') as f:
             f.write(file_request.content)
@@ -39,6 +54,8 @@ def download_file(file_url:str, path_to_write_to:str)->list:
         return 0, f"Wrote {path_to_write_to}"
 
     except Exception as ex:
+
+        LOG.fatal(f"EXCEPTION: %s" % type(ex))
         return 1, f"Failed {path_to_write_to}, exception: {ex}"
 
 
