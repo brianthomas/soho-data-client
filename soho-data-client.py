@@ -76,8 +76,7 @@ def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, tim
         # Check if file exists before pulling unless overwrite set
         # also, if file is small size (less than min) we will overwrite
         # regardless
-        if not overwrite and os.path.exists(path_to_write_to)
-           and Path(path_to_write_to).stat().st_size > MIN_FILE_SIZE:
+        if not overwrite and os.path.exists(path_to_write_to) and Path(path_to_write_to).stat().st_size > MIN_FILE_SIZE:
                 msg = f"Skipped {path_to_write_to}, exists"
                 statuses['skip'].append(msg)
                 LOG.debug(msg)
