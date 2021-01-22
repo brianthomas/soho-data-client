@@ -27,7 +27,7 @@ DEF_NUM_THREADS = 8
 DEF_TIMEOUT = 5
 
 # Minimum expected FITS file size threshold, in bytes
-MIN_FILE_SIZE = 10000
+MIN_FILE_SIZE = 100000
 
 def download_file(file_url:str, path_to_write_to:str)->list:
     """ 
@@ -74,10 +74,13 @@ def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, tim
         path_to_write_to = os.path.join(location, fits_file)
 
         # Check if file exists before pulling unless overwrite set
-        if not overwrite and os.path.exists(path_to_write_to):
-            msg = f"Skipped {path_to_write_to}, exists"
-            statuses['skip'].append(msg)
-            LOG.debug(msg)
+        # also, if file is small size (less than min) we will overwrite
+        # regardless
+        if not overwrite and os.path.exists(path_to_write_to)
+           and Path(path_to_write_to).stat().st_size > MIN_FILE_SIZE:
+                msg = f"Skipped {path_to_write_to}, exists"
+                statuses['skip'].append(msg)
+                LOG.debug(msg)
 
         else:
 
