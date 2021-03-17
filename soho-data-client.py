@@ -71,7 +71,7 @@ def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, tim
     download_list = []
     for fits_file in file_list:
 
-        path_to_write_to = os.path.join(location, fits_file)
+        path_to_write_to = os.path.join(location, os.path.join(idname, fits_file))
 
         # Check if file exists before pulling unless overwrite set
         # also, if file is small size (less than min) we will overwrite
@@ -123,23 +123,8 @@ def download_info(id_name:str, filelist:pd.DataFrame)->dict:
         filename = row[1]['filename']
         idn_val = row[1][id_name]
 
-        dt_str = row[1]['datetime'].split()[0]
-        date_str = dt_str.split("-")
-        year = int(date_str[0])
-        month = int(date_str[1])
-        day = int(date_str[2])
-
-        # fix format to last 2 digits for year
-        if year >= 2000:
-            year = year - 2000
-        else:
-            year = year - 1900
-
-        # get date string
-        date = "{:02d}{:02d}{:02d}".format(year,month,day)
-
         # construct url for this date and pull the page
-        url = f"{date}/{telescope}/{filename}"
+        url = f"{telescope}/{filename}"
 
         urls[idn_val].append(url)
 
