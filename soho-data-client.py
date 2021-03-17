@@ -59,7 +59,7 @@ def download_file(file_url:str, path_to_write_to:str)->list:
         return 1, f"Failed {path_to_write_to}, exception: {ex}"
 
 
-def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, timeout:int=DEF_TIMEOUT, is_level1:bool=True)->dict:
+def get_data(file_info:dict, location:str, overwrite:bool=False, timeout:int=DEF_TIMEOUT, is_level1:bool=True)->dict:
 
     BASE_URL = 'https://lasco-www.nrl.navy.mil/lz'
 
@@ -69,9 +69,11 @@ def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, tim
     statuses = {'success':[], 'skip':[], 'exception':[] }
 
     download_list = []
-    for fits_file in file_list:
+    urls = file_info['url']
+    out_dirs = file_info['out']
+    for i in range(0, len(urls)):
 
-        path_to_write_to = os.path.join(location, os.path.join(idname, fits_file))
+        path_to_write_to = os.path.join(location, out_dirs[i])
 
         # Check if file exists before pulling unless overwrite set
         # also, if file is small size (less than min) we will overwrite
@@ -87,7 +89,7 @@ def get_data(idname:str, file_list:list, location:str, overwrite:bool=False, tim
             Path(os.path.dirname(path_to_write_to)).mkdir(parents=True, exist_ok=True)
 
             # construct file url and pull via GET request
-            info = {'url': f"{BASE_URL}/{fits_file}", 'path':path_to_write_to }
+            info = {'url': f"{BASE_URL}/{urls[i]}", 'path':path_to_write_to }
             download_list.append(info)
 
     for fi in download_list:
@@ -115,7 +117,7 @@ def download_info(id_name:str, filelist:pd.DataFrame)->dict:
 
     # split up by indicated id_name column
     id_list = unique(filelist[id_name])
-    urls = { idname:[] for idname in id_list }
+    info = { idname:{'url':[], 'out':[]} for idname in id_list }
 
     for row in filelist.iterrows():
 
@@ -123,12 +125,29 @@ def download_info(id_name:str, filelist:pd.DataFrame)->dict:
         filename = row[1]['filename']
         idn_val = row[1][id_name]
 
-        # construct url for this date and pull the page
-        url = f"{telescope}/{filename}"
+        dt_str = row[1]['datetime'].split()[0]
+        date_str = dt_str.split("-")
+        year = int(date_str[0])
+        month = int(date_str[1])
+        day = int(date_str[2])
 
-        urls[idn_val].append(url)
+        # fix format to last 2 digits for year
+        if year >= 2000:
+            year = year - 2000
+        else:
+            year = year - 1900
 
-    return urls
+        # get date string
+        date = "{:02d}{:02d}{:02d}".format(year,month,day)
+
+         # construct url for this date and pull the page
+        url = f"{date}/{telescope}/{filename}"
+        out = f"{idn_val}/{telescope}/{filename}"
+
+        info[idn_val]['url'].append(url)
+        info[idn_val]['out'].append(out)
+
+    return info 
 
 
 def pull_soho_data (id_column:str, location:str, filelist:pd.DataFrame, num_threads:int=DEF_NUM_THREADS, overwrite:bool=False)->dict:
@@ -148,7 +167,7 @@ def pull_soho_data (id_column:str, location:str, filelist:pd.DataFrame, num_thre
     # thread on groups of files (by id) and download 
     with concurrent.futures.ThreadPoolExecutor(max_workers = num_threads) as executor:
 
-        future_to_url = { executor.submit(get_data, idn, file_list, location, overwrite, DEF_TIMEOUT): file_list for idn, file_list in download_list.items()}
+        future_to_url = { executor.submit(get_data, file_info, location, overwrite, DEF_TIMEOUT): file_info for file_info in download_list.values()}
         for future in concurrent.futures.as_completed(future_to_url):
             url = future_to_url[future]
             try:
